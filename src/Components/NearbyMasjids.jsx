@@ -39,25 +39,6 @@ function normalizeMasjids(elements) {
     .filter(Boolean);
 }
 
-function normalizeSearchResults(results) {
-  return results
-    .map((item, index) => {
-      const lat = Number(item.lat);
-      const lon = Number(item.lon);
-      if (!lat || !lon) return null;
-      const displayName = item.display_name || "";
-      const shortName = displayName.split(",")[0] || "Masjid";
-      return {
-        id: `search-${item.place_id}-${index}`,
-        name: shortName,
-        lat,
-        lon,
-        address: displayName,
-      };
-    })
-    .filter(Boolean);
-}
-
 function buildMapUrl(lat, lon, radiusKm) {
   const delta = Math.max(radiusKm / 111, 0.01);
   const left = lon - delta;
@@ -69,26 +50,15 @@ function buildMapUrl(lat, lon, radiusKm) {
 
 function NearbyMasjids() {
   const [masjids, setMasjids] = useState([]);
-  const [searchResults, setSearchResults] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedPlaceId, setSelectedPlaceId] = useState(null);
+  const [selectedId, setSelectedId] = useState(null);
   const [radiusKm, setRadiusKm] = useState(DEFAULT_RADIUS_KM);
   const [loading, setLoading] = useState(false);
-  const [searchLoading, setSearchLoading] = useState(false);
   const [error, setError] = useState("");
   const [userLocation, setUserLocation] = useState(null);
 
-  const combinedResults = useMemo(
-    () => [...searchResults, ...masjids],
-    [searchResults, masjids]
-  );
-
-  const selectedPlace = useMemo(
-    () =>
-      combinedResults.find((place) => place.id === selectedPlaceId) ||
-      searchResults[0] ||
-      masjids[0],
-    [combinedResults, selectedPlaceId, searchResults, masjids]
+  const selectedMasjid = useMemo(
+    () => masjids.find((masjid) => masjid.id === selectedId) || masjids[0],
+    [masjids, selectedId]
   );
 
   const handleFindMasjids = () => {
@@ -124,7 +94,7 @@ function NearbyMasjids() {
           }
 
           setMasjids(results);
-          setSelectedPlaceId(results[0]?.id || null);
+          setSelectedId(results[0]?.id || null);
         } catch (err) {
           setError("Could not load nearby masjids. Please try again.");
         } finally {
@@ -137,41 +107,6 @@ function NearbyMasjids() {
       },
       { enableHighAccuracy: false, timeout: 10000 }
     );
-  };
-
-  const handleSearchByName = async (event) => {
-    event.preventDefault();
-    const trimmed = searchTerm.trim();
-    if (!trimmed) return;
-
-    setError("");
-    setSearchLoading(true);
-
-    try {
-      const query = encodeURIComponent(`${trimmed} masjid`);
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=10&addressdetails=1`,
-        { headers: { Accept: "application/json" } }
-      );
-
-      if (!response.ok) {
-        throw new Error("Nominatim request failed");
-      }
-
-      const data = await response.json();
-      const results = normalizeSearchResults(Array.isArray(data) ? data : []);
-
-      if (results.length === 0) {
-        setError("No masjids found with that name. Try another search.");
-      }
-
-      setSearchResults(results);
-      setSelectedPlaceId(results[0]?.id || null);
-    } catch (err) {
-      setError("Could not search masjids by name. Please try again.");
-    } finally {
-      setSearchLoading(false);
-    }
   };
 
   return (
@@ -209,26 +144,6 @@ function NearbyMasjids() {
         </div>
       </div>
 
-      <form
-        onSubmit={handleSearchByName}
-        className="mt-4 flex flex-col gap-3 md:flex-row md:items-center"
-      >
-        <input
-          type="text"
-          value={searchTerm}
-          onChange={(event) => setSearchTerm(event.target.value)}
-          placeholder="Search by masjid name"
-          className="flex-1 rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-300/70"
-        />
-        <button
-          type="submit"
-          className="rounded-full border border-white/10 bg-white/10 px-5 py-3 text-sm font-semibold text-amber-200 transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={searchLoading}
-        >
-          {searchLoading ? "Searching..." : "Search name"}
-        </button>
-      </form>
-
       {error && (
         <div className="mt-4 rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
           {error}
@@ -236,84 +151,48 @@ function NearbyMasjids() {
       )}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
-        <div className="space-y-6">
-          <div className="space-y-3">
-            <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
-              Search results
-            </p>
-            {searchResults.length === 0 ? (
-              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-200">
-                Search for a masjid by name to see results here.
-              </div>
-            ) : (
-              searchResults.map((masjid) => (
-                <button
-                  key={masjid.id}
-                  type="button"
-                  onClick={() => setSelectedPlaceId(masjid.id)}
-                  className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
-                    selectedPlace?.id === masjid.id
-                      ? "border-amber-300/80 bg-amber-300/10"
-                      : "border-white/10 bg-white/5 hover:border-white/20"
-                  }`}
-                >
-                  <p className="text-sm font-semibold text-white">
-                    {masjid.name}
-                  </p>
-                  <p className="text-xs text-slate-300">
-                    {masjid.address || "Address unavailable"}
-                  </p>
-                </button>
-              ))
-            )}
-          </div>
-
-          <div className="space-y-3">
-            <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
-              Nearby results
-            </p>
-            {masjids.length === 0 ? (
-              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-200">
-                Use your location to discover nearby masjids.
-              </div>
-            ) : (
-              masjids.map((masjid) => (
-                <button
-                  key={masjid.id}
-                  type="button"
-                  onClick={() => setSelectedPlaceId(masjid.id)}
-                  className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
-                    selectedPlace?.id === masjid.id
-                      ? "border-amber-300/80 bg-amber-300/10"
-                      : "border-white/10 bg-white/5 hover:border-white/20"
-                  }`}
-                >
-                  <p className="text-sm font-semibold text-white">
-                    {masjid.name}
-                  </p>
-                  <p className="text-xs text-slate-300">
-                    {masjid.address || "Address unavailable"}
-                  </p>
-                </button>
-              ))
-            )}
-          </div>
+        <div className="space-y-3">
+          {masjids.length === 0 ? (
+            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-6 text-sm text-slate-200">
+              Use your location to discover nearby masjids.
+            </div>
+          ) : (
+            masjids.map((masjid) => (
+              <button
+                key={masjid.id}
+                type="button"
+                onClick={() => setSelectedId(masjid.id)}
+                className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
+                  selectedMasjid?.id === masjid.id
+                    ? "border-amber-300/80 bg-amber-300/10"
+                    : "border-white/10 bg-white/5 hover:border-white/20"
+                }`}
+              >
+                <p className="text-sm font-semibold text-white">
+                  {masjid.name}
+                </p>
+                <p className="text-xs text-slate-300">
+                  {masjid.address || "Address unavailable"}
+                </p>
+              </button>
+            ))
+          )}
         </div>
 
         <div className="rounded-3xl border border-white/10 bg-white/5 p-3">
-          {selectedPlace ? (
+          {selectedMasjid ? (
             <div className="space-y-3">
               <iframe
                 title="Masjid location map"
                 className="h-64 w-full rounded-2xl border-0"
-                src={buildMapUrl(selectedPlace.lat, selectedPlace.lon, radiusKm)}
+                src={buildMapUrl(selectedMasjid.lat, selectedMasjid.lon, radiusKm)}
               />
               <div className="flex items-center justify-between text-xs text-slate-300">
                 <span>
-                  {selectedPlace.name}
+                  {selectedMasjid.name}
                 </span>
                 <a
-                  href={`https://www.openstreetmap.org/?mlat=${selectedPlace.lat}&mlon=${selectedPlace.lon}#map=16/${selectedPlace.lat}/${selectedPlace.lon}`}
+                  href={`https://www.openstreetmap.org/?mlat=${selectedMasjid.lat}&mlon=${selectedMasjid.lon}#map=16/${selectedMasjid.lat}/${selectedMasjid.lon}`}
                   target="_blank"
                   rel="noreferrer"
                   className="text-amber-200 hover:text-amber-100"
