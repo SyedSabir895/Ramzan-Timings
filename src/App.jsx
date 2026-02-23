@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import axios from "axios";
 import SearchForm from "./Components/SearchForm";
 import PrayerCard from "./Components/PrayerCard";
@@ -11,24 +11,52 @@ function App() {
   const [calendar, setCalendar] = useState([]);
   const [location, setLocation] = useState(null);
   const [hijriYear, setHijriYear] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [isLoadingTimings, setIsLoadingTimings] = useState(false);
   const [isLoadingCalendar, setIsLoadingCalendar] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [error, setError] = useState("");
 
-  const fetchTimings = async (city, country) => {
+  const formatDateForApi = (dateValue) => {
+    const day = String(dateValue.getDate()).padStart(2, "0");
+    const month = String(dateValue.getMonth() + 1).padStart(2, "0");
+    const year = dateValue.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
+
+  const isToday = useMemo(() => {
+    const today = new Date();
+    return (
+      selectedDate.getDate() === today.getDate() &&
+      selectedDate.getMonth() === today.getMonth() &&
+      selectedDate.getFullYear() === today.getFullYear()
+    );
+  }, [selectedDate]);
+
+  const displayDate = useMemo(
+    () =>
+      selectedDate.toLocaleDateString(undefined, {
+        weekday: "long",
+        month: "short",
+        day: "numeric",
+      }),
+    [selectedDate]
+  );
+
+  const fetchTimings = async (city, country, dateValue = new Date()) => {
     try {
       setIsLoadingTimings(true);
       setError("");
       const res = await axios.get(
         "https://api.aladhan.com/v1/timingsByCity",
         {
-          params: { city, country, method: 2 },
+          params: { city, country, method: 2, date: formatDateForApi(dateValue) },
         }
       );
       setTimings(res.data.data.timings);
       setLocation({ city, country });
       setHijriYear(res.data.data.date.hijri.year);
+      setSelectedDate(dateValue);
       setCalendar([]);
       setIsCalendarOpen(false);
     } catch (error) {
@@ -36,6 +64,13 @@ function App() {
     } finally {
       setIsLoadingTimings(false);
     }
+  };
+
+  const shiftDay = async (deltaDays) => {
+    if (!location) return;
+    const nextDate = new Date(selectedDate);
+    nextDate.setDate(nextDate.getDate() + deltaDays);
+    await fetchTimings(location.city, location.country, nextDate);
   };
 
   const fetchCalendar = async () => {
@@ -92,8 +127,20 @@ function App() {
         {timings && (
           <div className="w-full">
             <div className="grid gap-6 md:grid-cols-2">
-              <PrayerCard timings={timings} />
-              <Countdown targetTime={timings.Maghrib} />
+              <PrayerCard
+                timings={timings}
+                displayDate={displayDate}
+                isToday={isToday}
+                onPrev={() => shiftDay(-1)}
+                onNext={() => shiftDay(1)}
+              />
+              {isToday ? (
+                <Countdown targetTime={timings.Maghrib} />
+              ) : (
+                <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-3xl p-6 shadow-[0_25px_70px_-45px_rgba(0,0,0,0.85)] text-center text-slate-200">
+                  Countdown is available for today only.
+                </div>
+              )}
             </div>
 
             <div className="mt-8 flex flex-col items-center gap-4">
