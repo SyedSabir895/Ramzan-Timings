@@ -47,27 +47,30 @@ function App() {
     try {
       setIsLoadingTimings(true);
       setError("");
+      const dateToFetch = new Date(dateValue);
+      const formattedDate = formatDateForApi(dateToFetch);
       const res = await axios.get(
         "https://api.aladhan.com/v1/timingsByCity",
         {
-          params: { city, country, method: 2, date: formatDateForApi(dateValue) },
+          params: { city, country, method: 2, date: formattedDate },
         }
       );
       setTimings(res.data.data.timings);
       setLocation({ city, country });
       setHijriYear(res.data.data.date.hijri.year);
-      setSelectedDate(dateValue);
+      setSelectedDate(dateToFetch);
       setCalendar([]);
       setIsCalendarOpen(false);
     } catch (error) {
       setError("Could not fetch timings. Please try again.");
+      console.error("Timings fetch error:", error);
     } finally {
       setIsLoadingTimings(false);
     }
   };
 
   const shiftDay = async (deltaDays) => {
-    if (!location) return;
+    if (!location || !timings) return;
     const nextDate = new Date(selectedDate);
     nextDate.setDate(nextDate.getDate() + deltaDays);
     await fetchTimings(location.city, location.country, nextDate);
