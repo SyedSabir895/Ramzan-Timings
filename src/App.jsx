@@ -65,7 +65,7 @@ function App() {
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#0b0f1a] px-4 py-12 text-white">
       <div className="pointer-events-none absolute -top-40 -left-32 h-96 w-96 rounded-full bg-amber-400/20 blur-[120px]" />
-      <div className="pointer-events-none absolute top-20 right-0 h-[28rem] w-[28rem] rounded-full bg-cyan-400/10 blur-[140px]" />
+      <div className="pointer-events-none absolute top-20 right-0 h-112 w-md rounded-full bg-cyan-400/10 blur-[140px]" />
       <div className="pointer-events-none absolute bottom-0 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-fuchsia-300/10 blur-[120px]" />
 
       <div className="relative mx-auto flex w-full max-w-5xl flex-col items-center gap-8">
