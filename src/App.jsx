@@ -106,12 +106,34 @@ function App() {
       <div className="pointer-events-none absolute top-20 right-0 h-112 w-md rounded-full bg-cyan-400/10 blur-[140px]" />
       <div className="pointer-events-none absolute bottom-0 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-fuchsia-300/10 blur-[120px]" />
 
+      {/* Rising Moon Animation */}
+      <div className="pointer-events-none absolute top-10 right-10 z-0 opacity-0 animate-moon-rise md:top-20 md:right-20">
+        <svg
+          width="120"
+          height="120"
+          viewBox="0 0 100 100"
+          className="drop-shadow-[0_0_30px_rgba(251,191,36,0.4)] md:w-40 md:h-40"
+        >
+          <path
+            d="M75,25 C55,25 40,40 40,60 C40,80 55,95 75,95 C60,95 45,85 35,70 C25,55 25,35 35,20 C45,5 60,15 75,25 Z"
+            fill="url(#moonGradient)"
+          />
+          <defs>
+            <linearGradient id="moonGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#fef3c7" />
+              <stop offset="50%" stopColor="#fbbf24" />
+              <stop offset="100%" stopColor="#d97706" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+
       <div className="relative mx-auto flex w-full max-w-5xl flex-col items-center gap-8">
-        <div className="text-center">
+        <div className="text-center opacity-0 animate-fade-in-up">
           <p className="text-xs uppercase tracking-[0.35em] text-amber-200/80">
             Ramadan 2026
           </p>
-          <h1 className="mt-3 text-4xl md:text-6xl font-semibold text-white">
+          <h1 className="mt-3 text-4xl md:text-6xl font-semibold text-white drop-shadow-sm">
             🌙 Ramadan Timings
           </h1>
           <p className="mt-3 text-slate-300">
@@ -119,7 +141,9 @@ function App() {
           </p>
         </div>
 
-        <SearchForm onSearch={fetchTimings} isLoading={isLoadingTimings} />
+        <div className="w-full max-w-2xl opacity-0 animate-fade-in-up animation-delay-200">
+          <SearchForm onSearch={fetchTimings} isLoading={isLoadingTimings} />
+        </div>
 
         {error && (
           <div className="w-full max-w-3xl rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">

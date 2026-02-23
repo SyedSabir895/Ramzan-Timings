@@ -17,3 +17,41 @@
 		font-family: "Fraunces", "Times New Roman", serif;
 	}
 }
+
+@keyframes moonRise {
+	0% {
+		transform: translate(100%, 100%) scale(0.5);
+		opacity: 0;
+	}
+	100% {
+		transform: translate(0, 0) scale(1);
+		opacity: 1;
+	}
+}
+
+@keyframes fadeInUp {
+	from {
+		opacity: 0;
+		transform: translateY(20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.animate-moon-rise {
+	animation: moonRise 2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-fade-in-up {
+	animation: fadeInUp 1s ease-out forwards;
+}
+
+.animation-delay-200 {
+	animation-delay: 200ms;
+}
+
+.animation-delay-500 {
+	animation-delay: 500ms;
+}
