@@ -89,7 +89,7 @@ function SearchForm({ onSearch, isLoading }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-5 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.8)] w-full max-w-3xl"
+      className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-5 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.8)] w-full max-w-3xl relative"
     >
       <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
         <div className="md:col-span-3 relative">
@@ -104,7 +104,7 @@ function SearchForm({ onSearch, isLoading }) {
           />
 
           {showSuggestions && suggestions.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-slate-900 border border-white/10 rounded-xl shadow-xl max-h-60 overflow-y-auto z-50">
+            <div className="absolute top-full left-0 right-0 bg-slate-900 border border-white/10 rounded-xl shadow-2xl max-h-60 overflow-y-auto z-50">
               {loadingSuggestions ? (
                 <div className="px-4 py-3 text-sm text-slate-300">
                   Loading...
