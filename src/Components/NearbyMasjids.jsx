@@ -26,7 +26,8 @@ function normalizeMasjids(elements) {
         name: element.tags?.name || "Masjid",
         lat,
         lon,
-        address: element.tags?.["addr:full"] ||
+        address:
+          element.tags?.["addr:full"] ||
           [
             element.tags?.["addr:housenumber"],
             element.tags?.["addr:street"],
@@ -39,13 +40,8 @@ function normalizeMasjids(elements) {
     .filter(Boolean);
 }
 
-function buildMapUrl(lat, lon, radiusKm) {
-  const delta = Math.max(radiusKm / 111, 0.01);
-  const left = lon - delta;
-  const right = lon + delta;
-  const top = lat + delta;
-  const bottom = lat - delta;
-  return `https://www.openstreetmap.org/export/embed.html?bbox=${left}%2C${bottom}%2C${right}%2C${top}&layer=mapnik&marker=${lat}%2C${lon}`;
+function buildMapUrl(lat, lon) {
+  return `https://www.google.com/maps?q=${lat},${lon}&z=16&output=embed`;
 }
 
 function NearbyMasjids() {
@@ -58,7 +54,7 @@ function NearbyMasjids() {
 
   const selectedMasjid = useMemo(
     () => masjids.find((masjid) => masjid.id === selectedId) || masjids[0],
-    [masjids, selectedId]
+    [masjids, selectedId],
   );
 
   const handleFindMasjids = () => {
@@ -77,10 +73,13 @@ function NearbyMasjids() {
 
         try {
           const radiusMeters = radiusKm * 1000;
-          const response = await fetch("https://overpass-api.de/api/interpreter", {
-            method: "POST",
-            body: buildOverpassQuery(latitude, longitude, radiusMeters),
-          });
+          const response = await fetch(
+            "https://overpass-api.de/api/interpreter",
+            {
+              method: "POST",
+              body: buildOverpassQuery(latitude, longitude, radiusMeters),
+            },
+          );
 
           if (!response.ok) {
             throw new Error("Overpass request failed");
@@ -105,7 +104,7 @@ function NearbyMasjids() {
         setLoading(false);
         setError("Location permission denied. Please allow location access.");
       },
-      { enableHighAccuracy: false, timeout: 10000 }
+      { enableHighAccuracy: false, timeout: 10000 },
     );
   };
 
@@ -185,19 +184,17 @@ function NearbyMasjids() {
               <iframe
                 title="Masjid location map"
                 className="h-64 w-full rounded-2xl border-0"
-                src={buildMapUrl(selectedMasjid.lat, selectedMasjid.lon, radiusKm)}
+                src={buildMapUrl(selectedMasjid.lat, selectedMasjid.lon)}
               />
               <div className="flex items-center justify-between text-xs text-slate-300">
-                <span>
-                  {selectedMasjid.name}
-                </span>
+                <span>{selectedMasjid.name}</span>
                 <a
-                  href={`https://www.openstreetmap.org/?mlat=${selectedMasjid.lat}&mlon=${selectedMasjid.lon}#map=16/${selectedMasjid.lat}/${selectedMasjid.lon}`}
+                  href={`https://www.google.com/maps/search/?api=1&query=${selectedMasjid.lat},${selectedMasjid.lon}`}
                   target="_blank"
                   rel="noreferrer"
                   className="text-amber-200 hover:text-amber-100"
                 >
-                  Open in maps
+                  Open in Google maps
                 </a>
               </div>
             </div>
@@ -211,7 +208,8 @@ function NearbyMasjids() {
 
       {userLocation && (
         <p className="mt-4 text-xs text-slate-400">
-          Showing results near {userLocation.lat.toFixed(3)}, {userLocation.lon.toFixed(3)}
+          Showing results near {userLocation.lat.toFixed(3)},{" "}
+          {userLocation.lon.toFixed(3)}
         </p>
       )}
     </div>
